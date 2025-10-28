@@ -89,8 +89,10 @@ object AppConfig {
     
     /**
      * Set maximum reconnect attempts
+     * Validates that attempts is positive (minimum 1)
      */
     fun setMaxReconnectAttempts(context: Context, attempts: Int) {
-        getPrefs(context).edit().putInt(KEY_MAX_RECONNECT_ATTEMPTS, attempts).apply()
+        val validAttempts = attempts.coerceAtLeast(1)
+        getPrefs(context).edit().putInt(KEY_MAX_RECONNECT_ATTEMPTS, validAttempts).apply()
     }
 }
