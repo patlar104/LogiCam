@@ -8,6 +8,7 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import com.logicam.util.AppConfig
 import com.logicam.util.SecureLogger
 import com.logicam.util.StorageUtil
 import kotlinx.coroutines.delay
@@ -26,8 +27,21 @@ class UploadWorker(
         private const val MAX_RETRY_ATTEMPTS = 3
         
         fun scheduleUpload(context: Context) {
+            // Check if auto-upload is enabled
+            if (!AppConfig.isAutoUploadEnabled(context)) {
+                SecureLogger.i("UploadWorker", "Auto-upload is disabled")
+                return
+            }
+            
+            // Respect WiFi-only setting
+            val networkType = if (AppConfig.isUploadOnlyWifi(context)) {
+                NetworkType.UNMETERED  // WiFi only
+            } else {
+                NetworkType.CONNECTED  // Any network
+            }
+            
             val constraints = Constraints.Builder()
-                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .setRequiredNetworkType(networkType)
                 .build()
             
             val uploadRequest = OneTimeWorkRequestBuilder<UploadWorker>()

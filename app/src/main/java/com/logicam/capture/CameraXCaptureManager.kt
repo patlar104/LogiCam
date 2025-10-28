@@ -13,6 +13,7 @@ import androidx.camera.video.VideoCapture
 import androidx.camera.video.VideoRecordEvent
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
+import com.logicam.util.AppConfig
 import com.logicam.util.SecureLogger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -49,9 +50,10 @@ class CameraXCaptureManager(
             val provider = ProcessCameraProvider.getInstance(context).get()
             cameraProvider = provider
             
-            // Set up video capture
+            // Set up video capture with configured quality
+            val quality = AppConfig.getVideoQuality(context)
             val recorder = Recorder.Builder()
-                .setQualitySelector(QualitySelector.from(Quality.FHD))
+                .setQualitySelector(QualitySelector.from(quality))
                 .build()
             videoCapture = VideoCapture.withOutput(recorder)
             

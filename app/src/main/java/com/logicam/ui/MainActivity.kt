@@ -22,6 +22,7 @@ import android.view.LayoutInflater
 import android.widget.TextView
 import androidx.camera.view.PreviewView
 import com.logicam.session.SessionManagerService
+import com.logicam.util.AppConfig
 import com.logicam.upload.UploadManager
 import com.logicam.util.SecureLogger
 import kotlinx.coroutines.flow.collectLatest
@@ -181,8 +182,13 @@ class MainActivity : AppCompatActivity() {
             updateStatus("Recording stopped")
             
             result.getOrNull()?.let { file ->
-                // Schedule upload
-                uploadManager.scheduleUpload(file)
+                // Schedule upload if auto-upload is enabled
+                if (AppConfig.isAutoUploadEnabled(this)) {
+                    uploadManager.scheduleUpload(file)
+                    SecureLogger.i("MainActivity", "Upload scheduled for ${file.name}")
+                } else {
+                    SecureLogger.i("MainActivity", "Auto-upload disabled, skipping upload")
+                }
             }
         }
     }
