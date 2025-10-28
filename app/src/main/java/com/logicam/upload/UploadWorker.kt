@@ -69,8 +69,8 @@ class UploadWorker(
         var failureCount = 0
         
         for (file in files) {
-            val result = uploadFile(file)
-            if (result.isFailure) {
+            val success = uploadFile(file)
+            if (!success) {
                 failureCount++
                 SecureLogger.w("UploadWorker", "Failed to upload ${file.name}")
             } else {
@@ -90,7 +90,7 @@ class UploadWorker(
         }
     }
     
-    private suspend fun uploadFile(file: File): Result<Unit> {
+    private suspend fun uploadFile(file: File): Boolean {
         return try {
             // Simulate upload with delay
             // In production, implement actual upload to your backend
@@ -102,10 +102,10 @@ class UploadWorker(
             // val response = uploadApi.upload(file)
             
             SecureLogger.i("UploadWorker", "Upload completed: ${file.name}")
-            Result.success(Unit)
+            true
         } catch (e: Exception) {
             SecureLogger.e("UploadWorker", "Upload failed for ${file.name}", e)
-            Result.failure(e)
+            false
         }
     }
 }

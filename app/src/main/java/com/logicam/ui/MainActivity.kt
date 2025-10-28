@@ -159,35 +159,39 @@ class MainActivity : AppCompatActivity() {
     }
     
     private fun startRecording() {
-        val result = recordingManager.startRecording()
-        if (result.isSuccess) {
-            recordButton.apply {
-                text = getString(R.string.stop_recording)
-                setBackgroundColor(getColor(R.color.recording_red))
+        lifecycleScope.launch {
+            val result = recordingManager.startRecording()
+            if (result.isSuccess) {
+                recordButton.apply {
+                    text = getString(R.string.stop_recording)
+                    setBackgroundColor(getColor(R.color.recording_red))
+                }
+                updateStatus("Recording...")
+                Toast.makeText(this@MainActivity, R.string.recording_started, Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this@MainActivity, "Failed to start recording", Toast.LENGTH_SHORT).show()
             }
-            updateStatus("Recording...")
-            Toast.makeText(this, R.string.recording_started, Toast.LENGTH_SHORT).show()
-        } else {
-            Toast.makeText(this, "Failed to start recording", Toast.LENGTH_SHORT).show()
         }
     }
     
     private fun stopRecording() {
-        val result = recordingManager.stopRecording()
-        if (result.isSuccess) {
-            recordButton.apply {
-                text = getString(R.string.start_recording)
-                setBackgroundColor(getColor(R.color.purple_500))
-            }
-            updateStatus("Recording stopped")
-            
-            result.getOrNull()?.let { file ->
-                // Schedule upload if auto-upload is enabled
-                if (AppConfig.isAutoUploadEnabled(this)) {
-                    uploadManager.scheduleUpload(file)
-                    SecureLogger.i("MainActivity", "Upload scheduled for ${file.name}")
-                } else {
-                    SecureLogger.i("MainActivity", "Auto-upload disabled, skipping upload")
+        lifecycleScope.launch {
+            val result = recordingManager.stopRecording()
+            if (result.isSuccess) {
+                recordButton.apply {
+                    text = getString(R.string.start_recording)
+                    setBackgroundColor(getColor(R.color.purple_500))
+                }
+                updateStatus("Recording stopped")
+                
+                result.getOrNull()?.let { file ->
+                    // Schedule upload if auto-upload is enabled
+                    if (AppConfig.isAutoUploadEnabled(this@MainActivity)) {
+                        uploadManager.scheduleUpload(file)
+                        SecureLogger.i("MainActivity", "Upload scheduled for ${file.name}")
+                    } else {
+                        SecureLogger.i("MainActivity", "Auto-upload disabled, skipping upload")
+                    }
                 }
             }
         }

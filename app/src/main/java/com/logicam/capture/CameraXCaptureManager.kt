@@ -35,7 +35,7 @@ class CameraXCaptureManager(
     
     private val cameraExecutor: ExecutorService = Executors.newSingleThreadExecutor()
     
-    private val _cameraState = MutableStateFlow(CameraState.IDLE)
+    private val _cameraState = MutableStateFlow<CameraState>(CameraState.IDLE)
     val cameraState: StateFlow<CameraState> = _cameraState
     
     sealed class CameraState {
@@ -107,7 +107,7 @@ class CameraXCaptureManager(
     
     fun getVideoCapture(): VideoCapture<Recorder>? = videoCapture
     
-    fun setActiveRecording(recording: Recording?) {
+    suspend fun setActiveRecording(recording: Recording?) {
         this.recording = recording
         _cameraState.value = if (recording != null) CameraState.RECORDING else CameraState.READY
     }

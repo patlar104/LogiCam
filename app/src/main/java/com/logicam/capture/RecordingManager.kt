@@ -35,7 +35,7 @@ class RecordingManager(
         data class Error(val message: String) : RecordingState()
     }
     
-    fun startRecording(onEvent: (VideoRecordEvent) -> Unit = {}): Result<File> {
+    suspend fun startRecording(onEvent: (VideoRecordEvent) -> Unit = {}): Result<File> {
         return try {
             val videoCapture = cameraManager.getVideoCapture()
                 ?: return Result.failure(IllegalStateException("VideoCapture not initialized"))
@@ -65,7 +65,7 @@ class RecordingManager(
         }
     }
     
-    fun stopRecording(): Result<File?> {
+    suspend fun stopRecording(): Result<File?> {
         return try {
             val recording = cameraManager.getActiveRecording()
             if (recording != null) {
