@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">LogiCam</string>
+    <string name="permission_required">Camera and audio permissions are required</string>
+    <string name="recording_started">Recording started</string>
+    <string name="recording_stopped">Recording stopped</string>
+    <string name="session_active">Camera session active</string>
+    <string name="reconnecting">Reconnecting camera…</string>
+    <string name="upload_in_progress">Uploading recordings…</string>
+    <string name="start_recording">Start Recording</string>
+    <string name="stop_recording">Stop Recording</string>
+</resources>
