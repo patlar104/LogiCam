@@ -1,6 +1,7 @@
 package com.logicam.util
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
@@ -13,8 +14,9 @@ import kotlinx.coroutines.flow.StateFlow
 import java.util.concurrent.Executor
 
 /**
- * Android 15 Satellite Connectivity awareness
+ * Android 15+ Satellite Connectivity awareness
  * Monitors non-terrestrial network (NTN) status for satellite-only connections
+ * Updated for Android 16.1 QPR
  */
 class SatelliteConnectivityMonitor(private val context: Context) {
     
@@ -28,6 +30,7 @@ class SatelliteConnectivityMonitor(private val context: Context) {
      * Check if the device is currently using satellite-only connectivity
      * @return true if connected only to non-terrestrial network
      */
+    @SuppressLint("MissingPermission") // Permission check is performed before accessing serviceState
     fun checkSatelliteStatus(): Boolean {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM) {
             return false
