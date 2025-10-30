@@ -3,6 +3,7 @@ plugins {
     // AGP 9.0 has built-in Kotlin support, no separate plugin needed
 }
 
+// Updated for Android 16.1 QPR
 android {
     namespace = "com.logicam"
     compileSdk = 36  // Updated for Android 16.1 QPR
@@ -45,6 +46,7 @@ dependencies {
     implementation("com.google.android.material:material:1.12.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     
+    // Updated for Android 16.1 QPR
     // CameraX - Updated to latest versions compatible with API 36
     implementation("androidx.camera:camera-core:1.5.1")
     implementation("androidx.camera:camera-camera2:1.5.1")
@@ -53,13 +55,16 @@ dependencies {
     implementation("androidx.camera:camera-view:1.5.1")
     implementation("androidx.camera:camera-extensions:1.5.1")
     
+    // Updated for Android 16.1 QPR
     // Lifecycle - Updated for Android 16.1 QPR
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.9.4")
     implementation("androidx.lifecycle:lifecycle-service:2.9.4")
     
+    // Updated for Android 16.1 QPR
     // WorkManager - Updated for Android 16.1 QPR
     implementation("androidx.work:work-runtime-ktx:2.11.0")
     
+    // Updated for Android 16.1 QPR
     // Coroutines - Updated to latest stable version for Kotlin 2.2
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
     
