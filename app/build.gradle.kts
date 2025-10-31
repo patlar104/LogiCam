@@ -45,6 +45,7 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("com.google.android.material:material:1.12.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    implementation("androidx.recyclerview:recyclerview:1.3.2")
     
     // ===== Updated for Android 16.1 QPR =====
     // CameraX - Updated to 1.5.1 for API 36 compatibility
@@ -70,6 +71,13 @@ dependencies {
     
     // Permissions
     implementation("androidx.activity:activity-ktx:1.9.3")
+    
+    // Image loading for video thumbnails
+    implementation("io.coil-kt:coil:2.5.0")
+    implementation("io.coil-kt:coil-video:2.5.0")
+    
+    // Preferences for settings
+    implementation("androidx.preference:preference-ktx:1.2.1")
     
     // Testing
     testImplementation("junit:junit:4.13.2")

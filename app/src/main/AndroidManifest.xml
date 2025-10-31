@@ -40,6 +40,13 @@
             </intent-filter>
         </activity>
         
+        <!-- Video Gallery Activity -->
+        <activity
+            android:name=".ui.gallery.VideoGalleryActivity"
+            android:label="@string/video_gallery"
+            android:parentActivityName=".ui.MainActivity"
+            android:exported="false" />
+        
         <!-- Session Manager Service -->
         <service
             android:name=".session.SessionManagerService"

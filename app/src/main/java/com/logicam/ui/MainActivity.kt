@@ -18,10 +18,12 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.logicam.R
 import android.widget.TextView
 import androidx.camera.view.PreviewView
 import com.logicam.session.SessionManagerService
+import com.logicam.ui.gallery.VideoGalleryActivity
 import com.logicam.util.SecureLogger
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -35,6 +37,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var previewView: PreviewView
     private lateinit var statusText: TextView
     private lateinit var recordButton: MaterialButton
+    private lateinit var galleryFab: FloatingActionButton
     
     // ViewModel manages all business logic and survives configuration changes
     private val viewModel: MainViewModel by viewModels()
@@ -88,6 +91,7 @@ class MainActivity : AppCompatActivity() {
         previewView = findViewById(R.id.previewView)
         statusText = findViewById(R.id.statusText)
         recordButton = findViewById(R.id.recordButton)
+        galleryFab = findViewById(R.id.galleryFab)
         
         SecureLogger.i("MainActivity", "Activity created")
         
@@ -139,6 +143,11 @@ class MainActivity : AppCompatActivity() {
             } else {
                 viewModel.startRecording()
             }
+        }
+        
+        galleryFab.setOnClickListener {
+            val intent = Intent(this, VideoGalleryActivity::class.java)
+            startActivity(intent)
         }
     }
     
