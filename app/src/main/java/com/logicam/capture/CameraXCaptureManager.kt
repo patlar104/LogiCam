@@ -1,6 +1,8 @@
 package com.logicam.capture
 
 import android.content.Context
+import android.view.OrientationEventListener
+import android.view.Surface
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageCapture
@@ -22,7 +24,7 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 /**
- * CameraX-based capture pipeline with fallback support
+ * CameraX-based capture pipeline with fallback support and orientation handling
  */
 class CameraXCaptureManager(
     private val context: Context,
@@ -39,6 +41,24 @@ class CameraXCaptureManager(
     
     private val _cameraState = MutableStateFlow<CameraState>(CameraState.IDLE)
     val cameraState: StateFlow<CameraState> = _cameraState
+    
+    // Orientation listener for proper image/video rotation
+    private val orientationEventListener = object : OrientationEventListener(context) {
+        override fun onOrientationChanged(orientation: Int) {
+            if (orientation == ORIENTATION_UNKNOWN) return
+            
+            val rotation = when (orientation) {
+                in 45..134 -> Surface.ROTATION_270
+                in 135..224 -> Surface.ROTATION_180
+                in 225..314 -> Surface.ROTATION_90
+                else -> Surface.ROTATION_0
+            }
+            
+            // Update target rotation for image and video capture
+            imageCapture?.targetRotation = rotation
+            videoCapture?.targetRotation = rotation
+        }
+    }
     
     sealed class CameraState {
         object IDLE : CameraState()
@@ -71,6 +91,12 @@ class CameraXCaptureManager(
             imageAnalysis = ImageAnalysis.Builder()
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .build()
+            
+            // Enable orientation listener for automatic rotation handling
+            if (orientationEventListener.canDetectOrientation()) {
+                orientationEventListener.enable()
+                SecureLogger.i("CameraXCapture", "Orientation listener enabled")
+            }
             
             _cameraState.value = CameraState.READY
             SecureLogger.i("CameraXCapture", "Camera initialized successfully")
@@ -125,6 +151,9 @@ class CameraXCaptureManager(
     fun getActiveRecording(): Recording? = recording
     
     fun shutdown() {
+        // Disable orientation listener
+        orientationEventListener.disable()
+        
         cameraExecutor.shutdown()
         cameraProvider?.unbindAll()
         recording?.stop()
