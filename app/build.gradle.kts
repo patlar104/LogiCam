@@ -57,6 +57,8 @@ dependencies {
     
     // Lifecycle - Updated to 2.9.4 for API 36 compatibility
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.9.4")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.9.4")
+    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.9.4")
     implementation("androidx.lifecycle:lifecycle-service:2.9.4")
     
     // WorkManager - Updated to 2.11.0 for API 36 compatibility

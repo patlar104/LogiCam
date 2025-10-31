@@ -13,38 +13,31 @@ import android.provider.Settings
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.camera.core.Preview
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.button.MaterialButton
 import com.logicam.R
-import com.logicam.capture.Camera2FallbackManager
-import com.logicam.capture.CameraXCaptureManager
-import com.logicam.capture.RecordingManager
-import android.view.LayoutInflater
 import android.widget.TextView
 import androidx.camera.view.PreviewView
 import com.logicam.session.SessionManagerService
-import com.logicam.util.AppConfig
-import com.logicam.upload.UploadManager
 import com.logicam.util.SecureLogger
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 /**
  * Main activity with QuickCapture-style instant recording
+ * Uses ViewModel for state management and business logic
  */
 class MainActivity : AppCompatActivity() {
     
     private lateinit var previewView: PreviewView
     private lateinit var statusText: TextView
     private lateinit var recordButton: MaterialButton
-    private lateinit var cameraManager: CameraXCaptureManager
-    private lateinit var recordingManager: RecordingManager
-    private lateinit var uploadManager: UploadManager
     
-    private var camera2FallbackManager: Camera2FallbackManager? = null
+    // ViewModel manages all business logic and survives configuration changes
+    private val viewModel: MainViewModel by viewModels()
     
     private var sessionService: SessionManagerService? = null
     private var isServiceBound = false
@@ -70,7 +63,7 @@ class MainActivity : AppCompatActivity() {
     ) { permissions ->
         val allGranted = permissions.entries.all { it.value }
         if (allGranted) {
-            initializeCamera()
+            viewModel.initializeCamera(this)
         } else {
             AlertDialog.Builder(this)
                 .setTitle(R.string.permissions_required_title)
@@ -98,14 +91,9 @@ class MainActivity : AppCompatActivity() {
         
         SecureLogger.i("MainActivity", "Activity created")
         
-        // Initialize managers
-        cameraManager = CameraXCaptureManager(this, this)
-        recordingManager = RecordingManager(this, cameraManager)
-        uploadManager = UploadManager(this)
-        
         // Check permissions
         if (checkPermissions()) {
-            initializeCamera()
+            viewModel.initializeCamera(this)
         } else {
             requestPermissions()
         }
@@ -116,9 +104,9 @@ class MainActivity : AppCompatActivity() {
         // Set up UI
         setupUI()
         
-        // Observe states
-        observeRecordingState()
-        observeCameraState()
+        // Observe ViewModel state
+        observeUiState()
+        observeSessionState()
     }
     
     private fun checkPermissions(): Boolean {
@@ -144,137 +132,100 @@ class MainActivity : AppCompatActivity() {
         requestPermissionsLauncher.launch(permissions.toTypedArray())
     }
     
-    private fun initializeCamera() {
-        lifecycleScope.launch {
-            val result = cameraManager.initialize()
-            if (result.isSuccess) {
-                val preview = cameraManager.getPreview()
-                if (preview != null) {
-                    cameraManager.bindToLifecycle(previewView.surfaceProvider)
-                }
-                updateStatus("Camera ready")
-            } else {
-                // Try Camera2 fallback before giving up
-                SecureLogger.w("MainActivity", "CameraX failed, attempting Camera2 fallback")
-                updateStatus("Initializing backup camera...")
-                
-                camera2FallbackManager = Camera2FallbackManager(this@MainActivity)
-                val fallbackResult = camera2FallbackManager?.openCamera()
-                
-                if (fallbackResult?.isSuccess == true) {
-                    updateStatus("Camera ready (compatibility mode)")
-                    Toast.makeText(this@MainActivity, "Using compatibility camera mode", Toast.LENGTH_SHORT).show()
-                    // TODO: Add preview binding for Camera2
-                } else {
-                    updateStatus("Camera initialization failed")
-                    showCameraErrorDialog()
-                }
-            }
-        }
-    }
-    
-    private fun showCameraErrorDialog() {
-        AlertDialog.Builder(this)
-            .setTitle("Camera Error")
-            .setMessage("Failed to initialize camera. Please check camera permissions and try again.")
-            .setPositiveButton("Retry") { _, _ ->
-                initializeCamera()
-            }
-            .setNegativeButton("Exit") { _, _ ->
-                finish()
-            }
-            .setCancelable(false)
-            .show()
-    }
-    
     private fun setupUI() {
         recordButton.setOnClickListener {
-            if (recordingManager.isRecording()) {
-                stopRecording()
+            if (viewModel.isRecording()) {
+                viewModel.stopRecording()
             } else {
-                startRecording()
+                viewModel.startRecording()
             }
         }
     }
     
-    private fun startRecording() {
+    /**
+     * Observe ViewModel UI state and update UI accordingly
+     */
+    private fun observeUiState() {
         lifecycleScope.launch {
-            val result = recordingManager.startRecording()
-            if (result.isSuccess) {
-                recordButton.apply {
-                    text = getString(R.string.stop_recording)
-                    setBackgroundColor(getColor(R.color.recording_red))
-                }
-                updateStatus("Recording...")
-                Toast.makeText(this@MainActivity, R.string.recording_started, Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(this@MainActivity, "Failed to start recording", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-    
-    private fun stopRecording() {
-        lifecycleScope.launch {
-            val result = recordingManager.stopRecording()
-            if (result.isSuccess) {
-                recordButton.apply {
-                    text = getString(R.string.start_recording)
-                    setBackgroundColor(getColor(R.color.purple_500))
-                }
-                updateStatus("Recording stopped")
-                
-                result.getOrNull()?.let { file ->
-                    // Schedule upload if auto-upload is enabled
-                    if (AppConfig.isAutoUploadEnabled(this@MainActivity)) {
-                        uploadManager.scheduleUpload(file)
-                        SecureLogger.i("MainActivity", "Upload scheduled for ${file.name}")
-                    } else {
-                        SecureLogger.i("MainActivity", "Auto-upload disabled, skipping upload")
-                    }
-                }
-            }
-        }
-    }
-    
-    private fun observeRecordingState() {
-        lifecycleScope.launch {
-            recordingManager.recordingState.collectLatest { state ->
+            viewModel.uiState.collectLatest { state ->
                 when (state) {
-                    is RecordingManager.RecordingState.Recording -> {
-                        SecureLogger.i("MainActivity", "Recording: ${state.file.name}")
+                    is MainViewModel.CameraUiState.Idle -> {
+                        updateStatus("Idle")
+                        recordButton.isEnabled = false
                     }
-                    is RecordingManager.RecordingState.Completed -> {
-                        SecureLogger.i("MainActivity", "Recording completed: ${state.file.name}, duration: ${state.duration}ms")
+                    is MainViewModel.CameraUiState.Initializing -> {
+                        updateStatus("Initializing camera...")
+                        recordButton.isEnabled = false
+                    }
+                    is MainViewModel.CameraUiState.Ready -> {
+                        updateStatus("Camera ready")
+                        recordButton.isEnabled = true
+                        recordButton.text = getString(R.string.start_recording)
+                        recordButton.setBackgroundColor(getColor(R.color.purple_500))
+                        
+                        // Bind camera preview
+                        val cameraManager = viewModel.getCameraManager()
+                        cameraManager?.let {
+                            it.getPreview()?.let { preview ->
+                                it.bindToLifecycle(previewView.surfaceProvider)
+                            }
+                        }
+                    }
+                    is MainViewModel.CameraUiState.Recording -> {
+                        val durationSec = state.duration / 1000
+                        updateStatus("Recording... ${durationSec}s")
+                        recordButton.text = getString(R.string.stop_recording)
+                        recordButton.setBackgroundColor(getColor(R.color.recording_red))
+                    }
+                    is MainViewModel.CameraUiState.RecordingCompleted -> {
+                        updateStatus("Recording saved")
+                        recordButton.text = getString(R.string.start_recording)
+                        recordButton.setBackgroundColor(getColor(R.color.purple_500))
                         Toast.makeText(
                             this@MainActivity,
                             "Recording saved: ${state.file.name}",
                             Toast.LENGTH_SHORT
                         ).show()
                     }
-                    is RecordingManager.RecordingState.Error -> {
-                        SecureLogger.e("MainActivity", "Recording error: ${state.message}")
+                    is MainViewModel.CameraUiState.Error -> {
                         updateStatus("Error: ${state.message}")
+                        recordButton.isEnabled = state.canRetry
+                        if (state.canRetry) {
+                            showErrorDialog(state.message)
+                        } else {
+                            Toast.makeText(
+                                this@MainActivity,
+                                state.message,
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
                     }
-                    else -> {}
+                    is MainViewModel.CameraUiState.UsingFallback -> {
+                        updateStatus(state.message)
+                        recordButton.isEnabled = false // Camera2 fallback doesn't support recording yet
+                        Toast.makeText(
+                            this@MainActivity,
+                            state.message,
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
                 }
             }
         }
     }
     
-    private fun observeCameraState() {
-        lifecycleScope.launch {
-            cameraManager.cameraState.collectLatest { state ->
-                when (state) {
-                    is CameraXCaptureManager.CameraState.READY -> {
-                        updateStatus("Camera ready")
-                    }
-                    is CameraXCaptureManager.CameraState.ERROR -> {
-                        updateStatus("Camera error: ${state.message}")
-                    }
-                    else -> {}
-                }
+    private fun showErrorDialog(message: String) {
+        AlertDialog.Builder(this)
+            .setTitle("Camera Error")
+            .setMessage(message)
+            .setPositiveButton("Retry") { _, _ ->
+                viewModel.retryInitialization(this)
             }
-        }
+            .setNegativeButton("Exit") { _, _ ->
+                finish()
+            }
+            .setCancelable(false)
+            .show()
     }
     
     private fun observeSessionState() {
@@ -314,8 +265,6 @@ class MainActivity : AppCompatActivity() {
         if (isServiceBound) {
             unbindService(serviceConnection)
         }
-        cameraManager.shutdown()
-        camera2FallbackManager?.close()
         SecureLogger.i("MainActivity", "Activity destroyed")
     }
 }
