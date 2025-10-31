@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    
+    <!-- Video Settings Category -->
+    <PreferenceCategory
+        android:title="@string/video_settings"
+        app:iconSpaceReserved="false">
+        
+        <ListPreference
+            android:key="video_quality"
+            android:title="@string/video_quality"
+            android:entries="@array/video_quality_entries"
+            android:entryValues="@array/video_quality_values"
+            android:defaultValue="hd"
+            app:useSimpleSummaryProvider="true"
+            app:iconSpaceReserved="false" />
+        
+    </PreferenceCategory>
+    
+    <!-- Upload Settings Category -->
+    <PreferenceCategory
+        android:title="@string/upload_settings"
+        app:iconSpaceReserved="false">
+        
+        <SwitchPreferenceCompat
+            android:key="auto_upload"
+            android:title="@string/auto_upload"
+            android:summary="@string/auto_upload_summary"
+            android:defaultValue="false"
+            app:iconSpaceReserved="false" />
+        
+        <SwitchPreferenceCompat
+            android:key="wifi_only_upload"
+            android:title="@string/wifi_only_upload"
+            android:summary="@string/wifi_only_upload_summary"
+            android:defaultValue="true"
+            android:dependency="auto_upload"
+            app:iconSpaceReserved="false" />
+        
+    </PreferenceCategory>
+    
+    <!-- Storage Settings Category -->
+    <PreferenceCategory
+        android:title="@string/storage_settings"
+        app:iconSpaceReserved="false">
+        
+        <Preference
+            android:key="clear_cache"
+            android:title="@string/clear_cache"
+            android:summary="@string/clear_cache_summary"
+            app:iconSpaceReserved="false" />
+        
+    </PreferenceCategory>
+    
+    <!-- About Category -->
+    <PreferenceCategory
+        android:title="@string/about"
+        app:iconSpaceReserved="false">
+        
+        <Preference
+            android:key="about"
+            android:title="@string/version"
+            app:iconSpaceReserved="false" />
+        
+    </PreferenceCategory>
+    
+</PreferenceScreen>

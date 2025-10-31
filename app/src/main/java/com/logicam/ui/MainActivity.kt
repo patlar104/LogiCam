@@ -10,6 +10,8 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.IBinder
 import android.provider.Settings
+import android.view.Menu
+import android.view.MenuItem
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.activity.result.contract.ActivityResultContracts
@@ -24,6 +26,7 @@ import android.widget.TextView
 import androidx.camera.view.PreviewView
 import com.logicam.session.SessionManagerService
 import com.logicam.ui.gallery.VideoGalleryActivity
+import com.logicam.ui.settings.SettingsActivity
 import com.logicam.util.SecureLogger
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -266,6 +269,22 @@ class MainActivity : AppCompatActivity() {
         statusText.text = status
         lifecycleScope.launch {
             SecureLogger.logToFile(this@MainActivity, "MainActivity", "Status: $status")
+        }
+    }
+    
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.main_menu, menu)
+        return true
+    }
+    
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_settings -> {
+                val intent = Intent(this, SettingsActivity::class.java)
+                startActivity(intent)
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
         }
     }
     

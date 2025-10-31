@@ -59,6 +59,10 @@
     
     <!-- Settings strings -->
     <string name="settings">Settings</string>
+    <string name="settings_title">Settings</string>
+    <string name="video_settings">Video Settings</string>
+    <string name="upload_settings">Upload Settings</string>
+    <string name="storage_settings">Storage</string>
     <string name="video_quality">Video Quality</string>
     <string name="auto_upload">Auto Upload</string>
     <string name="auto_upload_summary">Automatically upload videos after recording</string>
@@ -66,8 +70,11 @@
     <string name="wifi_only_upload_summary">Only upload when connected to WiFi</string>
     <string name="clear_cache">Clear Cache</string>
     <string name="clear_cache_summary">Free up space by clearing temporary files</string>
+    <string name="cache_cleared">Cache cleared successfully</string>
+    <string name="cache_clear_failed">Failed to clear cache</string>
     <string name="about">About</string>
     <string name="version">Version</string>
+    <string name="version_format">Version %1$s</string>
     
     <!-- SessionManagerService notification strings -->
     <string name="notification_session_active">Camera session active</string>
@@ -76,4 +83,19 @@
     <string name="notification_reconnecting_format">Reconnecting camera… (%1$d/%2$d)</string>
     <string name="notification_channel_name">Camera Session</string>
     <string name="notification_channel_description">Maintains active camera session</string>
+    
+    <!-- Video quality options -->
+    <string-array name="video_quality_entries">
+        <item>SD (480p)</item>
+        <item>HD (720p)</item>
+        <item>Full HD (1080p)</item>
+        <item>4K (2160p)</item>
+    </string-array>
+    
+    <string-array name="video_quality_values">
+        <item>sd</item>
+        <item>hd</item>
+        <item>fhd</item>
+        <item>4k</item>
+    </string-array>
 </resources>
