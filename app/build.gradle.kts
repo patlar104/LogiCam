@@ -3,14 +3,15 @@ plugins {
     // AGP 9.0 has built-in Kotlin support, no separate plugin needed
 }
 
+// Updated for Android 16.1 QPR
 android {
     namespace = "com.logicam"
-    compileSdk = 35  // Updated to Android 15
+    compileSdk = 36  // Updated for Android 16.1 QPR
 
     defaultConfig {
         applicationId = "com.logicam"
         minSdk = 31  // Pixel devices with Android 12+
-        targetSdk = 35  // Updated to Android 15
+        targetSdk = 36  // Updated for Android 16.1 QPR
         versionCode = 1
         versionName = "1.0"
 
@@ -45,23 +46,25 @@ dependencies {
     implementation("com.google.android.material:material:1.12.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     
-    // CameraX - Updated to latest versions compatible with API 35
-    implementation("androidx.camera:camera-core:1.4.0")
-    implementation("androidx.camera:camera-camera2:1.4.0")
-    implementation("androidx.camera:camera-lifecycle:1.4.0")
-    implementation("androidx.camera:camera-video:1.4.0")
-    implementation("androidx.camera:camera-view:1.4.0")
-    implementation("androidx.camera:camera-extensions:1.4.0")
+    // ===== Updated for Android 16.1 QPR =====
+    // CameraX - Updated to 1.5.1 for API 36 compatibility
+    implementation("androidx.camera:camera-core:1.5.1")
+    implementation("androidx.camera:camera-camera2:1.5.1")
+    implementation("androidx.camera:camera-lifecycle:1.5.1")
+    implementation("androidx.camera:camera-video:1.5.1")
+    implementation("androidx.camera:camera-view:1.5.1")
+    implementation("androidx.camera:camera-extensions:1.5.1")
     
-    // Lifecycle - Updated for compatibility
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
-    implementation("androidx.lifecycle:lifecycle-service:2.8.7")
+    // Lifecycle - Updated to 2.9.4 for API 36 compatibility
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.9.4")
+    implementation("androidx.lifecycle:lifecycle-service:2.9.4")
     
-    // WorkManager - Updated for Kotlin 2.2
-    implementation("androidx.work:work-runtime-ktx:2.10.0")
+    // WorkManager - Updated to 2.11.0 for API 36 compatibility
+    implementation("androidx.work:work-runtime-ktx:2.11.0")
     
-    // Coroutines - Updated to version compatible with Kotlin 2.2
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
+    // Coroutines - Updated to 1.10.2 (latest stable)
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
+    // ===== End Android 16.1 QPR Updates =====
     
     // Permissions
     implementation("androidx.activity:activity-ktx:1.9.3")

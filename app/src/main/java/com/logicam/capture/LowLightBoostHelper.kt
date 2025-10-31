@@ -10,8 +10,9 @@ import android.os.Build
 import com.logicam.util.SecureLogger
 
 /**
- * Android 15 Low Light Boost feature support
+ * Android 15+ Low Light Boost feature support
  * Provides enhanced low-light camera preview and recording capabilities
+ * Updated for Android 16.1 QPR
  */
 object LowLightBoostHelper {
     

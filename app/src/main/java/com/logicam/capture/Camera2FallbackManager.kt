@@ -102,8 +102,14 @@ class Camera2FallbackManager(private val context: Context) {
             val recordingSurface = mediaRecorder?.surface
                 ?: return Result.failure(IllegalStateException("MediaRecorder surface not available"))
             
-            device.createCaptureSession(
-                listOf(previewSurface, recordingSurface),
+            // Updated for Android 16.1 QPR
+            val outputConfiguration1 = android.hardware.camera2.params.OutputConfiguration(previewSurface)
+            val outputConfiguration2 = android.hardware.camera2.params.OutputConfiguration(recordingSurface)
+            
+            val sessionConfiguration = android.hardware.camera2.params.SessionConfiguration(
+                android.hardware.camera2.params.SessionConfiguration.SESSION_REGULAR,
+                listOf(outputConfiguration1, outputConfiguration2),
+                context.mainExecutor,
                 object : CameraCaptureSession.StateCallback() {
                     override fun onConfigured(session: CameraCaptureSession) {
                         captureSession = session
@@ -113,9 +119,10 @@ class Camera2FallbackManager(private val context: Context) {
                     override fun onConfigureFailed(session: CameraCaptureSession) {
                         SecureLogger.e("Camera2Fallback", "Capture session configuration failed")
                     }
-                },
-                null
+                }
             )
+            
+            device.createCaptureSession(sessionConfiguration)
             
             Result.success(Unit)
         } catch (e: Exception) {
