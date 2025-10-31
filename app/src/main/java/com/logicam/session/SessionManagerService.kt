@@ -156,6 +156,8 @@ class SessionManagerService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         reconnectJob?.cancel()
+        // Cancel the service scope to prevent memory leaks
+        serviceScope.coroutineContext[Job]?.cancel()
         SecureLogger.i("SessionManager", "Service destroyed")
     }
 }

@@ -30,7 +30,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private var camera2FallbackManager: Camera2FallbackManager? = null
     private var recordingManager: RecordingManager? = null
     private var photoCaptureManager: PhotoCaptureManager? = null
-    private val uploadManager = UploadManager(application)
+    private val uploadManager = UploadManager(application, viewModelScope)
     
     private var recordingStartTime: Long = 0
     
