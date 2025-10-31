@@ -8,6 +8,9 @@ import com.logicam.capture.CameraXCaptureManager
 import com.logicam.capture.PhotoCaptureManager
 import com.logicam.capture.RecordingManager
 import com.logicam.upload.UploadManager
+import android.util.Log
+import com.logicam.capture.Camera2FallbackManager
+import com.logicam.util.SecureLogger
 import io.mockk.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -47,6 +50,22 @@ class MainViewModelTest {
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         
+        // Mock Android Log class
+        mockkStatic(Log::class)
+        every { Log.d(any(), any()) } returns 0
+        every { Log.i(any(), any()) } returns 0
+        every { Log.w(any(), any<String>()) } returns 0
+        every { Log.w(any(), any(), any()) } returns 0
+        every { Log.e(any(), any(), any()) } returns 0
+        every { Log.e(any(), any<String>()) } returns 0
+        
+        // Mock SecureLogger object
+        mockkObject(SecureLogger)
+        every { SecureLogger.d(any(), any()) } returns Unit
+        every { SecureLogger.i(any(), any()) } returns Unit
+        every { SecureLogger.w(any(), any(), any()) } returns Unit
+        every { SecureLogger.e(any(), any(), any()) } returns Unit
+        
         application = mockk(relaxed = true)
         cameraManager = mockk(relaxed = true)
         recordingManager = mockk(relaxed = true)
@@ -66,6 +85,8 @@ class MainViewModelTest {
     @After
     fun tearDown() {
         Dispatchers.resetMain()
+        unmockkStatic(Log::class)
+        unmockkObject(SecureLogger)
     }
 
     @Test
@@ -92,12 +113,17 @@ class MainViewModelTest {
         val exception = RuntimeException("Camera unavailable")
         coEvery { cameraManager.initialize() } returns Result.failure(exception)
         
+        // Mock Camera2FallbackManager since CameraX failure triggers fallback
+        mockkConstructor(Camera2FallbackManager::class)
+        coEvery { anyConstructed<Camera2FallbackManager>().openCamera() } returns Result.failure(exception)
+        
         viewModel.initializeCamera(lifecycle)
         advanceUntilIdle()
         
         val state = viewModel.uiState.value
         assertTrue(state is MainViewModel.CameraUiState.Error)
-        assertEquals("Camera unavailable", (state as MainViewModel.CameraUiState.Error).message)
+        // When fallback returns Result.failure (isSuccess=false), message is "Failed to initialize camera"
+        assertEquals("Failed to initialize camera", (state as MainViewModel.CameraUiState.Error).message)
     }
 
     @Test

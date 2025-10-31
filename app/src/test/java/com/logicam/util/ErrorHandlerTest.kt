@@ -3,6 +3,7 @@ package com.logicam.util
 import android.app.Activity
 import android.content.Context
 import android.content.DialogInterface
+import android.os.StatFs
 import androidx.appcompat.app.AlertDialog
 import com.logicam.R
 import io.mockk.*
@@ -23,6 +24,11 @@ class ErrorHandlerTest {
 
     @Before
     fun setup() {
+        // Mock Android StatFs class
+        mockkConstructor(StatFs::class)
+        every { anyConstructed<StatFs>().availableBlocksLong } returns 1000000L
+        every { anyConstructed<StatFs>().blockSizeLong } returns 4096L
+        
         activity = mockk(relaxed = true)
         context = mockk(relaxed = true)
         dialog = mockk(relaxed = true)
@@ -65,9 +71,10 @@ class ErrorHandlerTest {
         // Test that storage check doesn't crash with mock context
         every { context.getExternalFilesDir(any()) } returns null
         
-        // Should not crash, should return false indicating insufficient space
+        // Should not crash, should return null when storage can't be checked
         val result = ErrorHandler.checkStorageSpace(context)
-        assertEquals(false, result)
+        // When storage can't be determined, it returns null (no error, assume sufficient)
+        assertNull(result)
     }
 
     @Test
