@@ -1,6 +1,7 @@
 package com.logicam.upload
 
 import android.content.Context
+import android.provider.Settings
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingWorkPolicy
@@ -8,14 +9,16 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import com.logicam.LogiCamApplication
+import com.logicam.data.api.VideoMetadata
 import com.logicam.util.AppConfig
 import com.logicam.util.SecureLogger
 import com.logicam.util.StorageUtil
-import kotlinx.coroutines.delay
 import java.io.File
 
 /**
  * Background worker for uploading recordings with retry logic
+ * Now uses real upload API implementation
  */
 class UploadWorker(
     context: Context,
@@ -55,6 +58,10 @@ class UploadWorker(
         }
     }
     
+    private val uploadApi by lazy {
+        (applicationContext as LogiCamApplication).container.provideUploadApi()
+    }
+    
     override suspend fun doWork(): Result {
         SecureLogger.i("UploadWorker", "Starting upload work")
         
@@ -74,11 +81,11 @@ class UploadWorker(
                 failureCount++
                 SecureLogger.w("UploadWorker", "Failed to upload ${file.name}")
             } else {
-                // Move to uploaded directory or delete
+                // Only delete after successful upload
                 file.delete()
                 val metadataFile = StorageUtil.getMetadataFile(file)
                 metadataFile.delete()
-                SecureLogger.i("UploadWorker", "Successfully uploaded ${file.name}")
+                SecureLogger.i("UploadWorker", "Successfully uploaded and deleted ${file.name}")
             }
         }
         
@@ -92,17 +99,44 @@ class UploadWorker(
     
     private suspend fun uploadFile(file: File): Boolean {
         return try {
-            // Simulate upload with delay
-            // In production, implement actual upload to your backend
             SecureLogger.i("UploadWorker", "Uploading ${file.name} (${file.length()} bytes)")
-            delay(1000) // Simulate network operation
             
-            // TODO: Implement actual upload logic here
-            // Example: use Retrofit, OkHttp, or other HTTP client
-            // val response = uploadApi.upload(file)
+            // Get device ID for tracking
+            val deviceId = Settings.Secure.getString(
+                applicationContext.contentResolver,
+                Settings.Secure.ANDROID_ID
+            ) ?: "unknown"
             
-            SecureLogger.i("UploadWorker", "Upload completed: ${file.name}")
-            true
+            // Get video quality from app config and convert to string
+            val quality = AppConfig.getVideoQuality(applicationContext)
+            val resolution = when (quality) {
+                androidx.camera.video.Quality.UHD -> "UHD"
+                androidx.camera.video.Quality.FHD -> "FHD"
+                androidx.camera.video.Quality.HD -> "HD"
+                androidx.camera.video.Quality.SD -> "SD"
+                else -> "FHD"
+            }
+            
+            // Create metadata
+            val metadata = VideoMetadata(
+                duration = 0L, // TODO: Extract from video file
+                timestamp = file.lastModified(),
+                deviceId = deviceId,
+                resolution = resolution
+            )
+            
+            // Perform upload using API
+            val result = uploadApi.uploadVideo(file, metadata)
+            
+            if (result.isSuccess) {
+                val response = result.getOrNull()
+                SecureLogger.i("UploadWorker", "Upload completed: ${file.name} -> ${response?.url}")
+                true
+            } else {
+                val error = result.exceptionOrNull()
+                SecureLogger.e("UploadWorker", "Upload failed for ${file.name}", error)
+                false
+            }
         } catch (e: Exception) {
             SecureLogger.e("UploadWorker", "Upload failed for ${file.name}", e)
             false

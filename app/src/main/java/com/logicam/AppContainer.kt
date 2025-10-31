@@ -5,6 +5,9 @@ import androidx.lifecycle.LifecycleOwner
 import com.logicam.capture.CameraXCaptureManager
 import com.logicam.capture.PhotoCaptureManager
 import com.logicam.capture.RecordingManager
+import com.logicam.data.api.MockUploadApi
+import com.logicam.data.api.OkHttpUploadApi
+import com.logicam.data.api.UploadApi
 import com.logicam.upload.UploadManager
 import kotlinx.coroutines.CoroutineScope
 
@@ -45,5 +48,19 @@ open class AppContainer(private val applicationContext: Context) {
      */
     open fun provideUploadManager(scope: CoroutineScope): UploadManager {
         return UploadManager(applicationContext, scope)
+    }
+    
+    /**
+     * Provide UploadApi instance
+     * Uses MockUploadApi by default for development
+     * Override in production to use OkHttpUploadApi with real backend URL
+     */
+    open fun provideUploadApi(): UploadApi {
+        // TODO: Replace with OkHttpUploadApi when backend is ready
+        // val baseUrl = "https://your-api-server.com"
+        // val apiKey = "your-api-key-here"
+        // return OkHttpUploadApi(baseUrl, apiKey)
+        
+        return MockUploadApi()
     }
 }
