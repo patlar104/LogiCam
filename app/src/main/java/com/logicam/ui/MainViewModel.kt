@@ -4,6 +4,8 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.viewModelScope
+import com.logicam.AppContainer
+import com.logicam.LogiCamApplication
 import com.logicam.capture.Camera2FallbackManager
 import com.logicam.capture.CameraXCaptureManager
 import com.logicam.capture.PhotoCaptureManager
@@ -20,8 +22,12 @@ import java.io.File
 /**
  * ViewModel for MainActivity
  * Survives configuration changes and manages all business logic
+ * Uses AppContainer for dependency injection
  */
-class MainViewModel(application: Application) : AndroidViewModel(application) {
+class MainViewModel(
+    application: Application,
+    private val container: AppContainer = (application as LogiCamApplication).container
+) : AndroidViewModel(application) {
     
     private val _uiState = MutableStateFlow<CameraUiState>(CameraUiState.Idle)
     val uiState: StateFlow<CameraUiState> = _uiState.asStateFlow()
@@ -30,7 +36,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private var camera2FallbackManager: Camera2FallbackManager? = null
     private var recordingManager: RecordingManager? = null
     private var photoCaptureManager: PhotoCaptureManager? = null
-    private val uploadManager = UploadManager(application, viewModelScope)
+    private val uploadManager = container.provideUploadManager(viewModelScope)
     
     private var recordingStartTime: Long = 0
     
@@ -52,14 +58,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             _uiState.value = CameraUiState.Initializing
             
             try {
-                // Try CameraX first
-                val manager = CameraXCaptureManager(getApplication(), lifecycleOwner)
+                // Try CameraX first using container
+                val manager = container.provideCameraManager(lifecycleOwner)
                 val result = manager.initialize()
                 
                 if (result.isSuccess) {
                     cameraManager = manager
-                    recordingManager = RecordingManager(getApplication(), manager)
-                    photoCaptureManager = PhotoCaptureManager(getApplication(), manager)
+                    recordingManager = container.provideRecordingManager(manager)
+                    photoCaptureManager = container.providePhotoCaptureManager(manager)
                     
                     _uiState.value = CameraUiState.Ready
                     SecureLogger.i("MainViewModel", "CameraX initialized successfully")
