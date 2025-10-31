@@ -9,6 +9,7 @@ import android.os.Binder
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
+import com.logicam.R
 import com.logicam.util.SecureLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -60,7 +61,7 @@ class SessionManagerService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         SecureLogger.i("SessionManager", "Service started")
         
-        val notification = createNotification("Camera session active")
+        val notification = createNotification(getString(R.string.notification_session_active))
         startForeground(NOTIFICATION_ID, notification)
         
         initializeSession()
@@ -77,7 +78,7 @@ class SessionManagerService : Service() {
             try {
                 _sessionState.value = SessionState.ACTIVE
                 SecureLogger.i("SessionManager", "Session initialized")
-                updateNotification("Camera session ready")
+                updateNotification(getString(R.string.notification_session_ready))
             } catch (e: Exception) {
                 SecureLogger.e("SessionManager", "Failed to initialize session", e)
                 handleSessionError()
@@ -91,7 +92,7 @@ class SessionManagerService : Service() {
             attemptReconnect()
         } else {
             SecureLogger.e("SessionManager", "Max reconnect attempts reached")
-            updateNotification("Camera session failed")
+            updateNotification(getString(R.string.notification_session_failed))
         }
     }
     
@@ -102,7 +103,7 @@ class SessionManagerService : Service() {
             reconnectAttempts++
             
             SecureLogger.i("SessionManager", "Reconnecting... Attempt $reconnectAttempts")
-            updateNotification("Reconnecting camera... ($reconnectAttempts/$MAX_RECONNECT_ATTEMPTS)")
+            updateNotification(getString(R.string.notification_reconnecting_format, reconnectAttempts, MAX_RECONNECT_ATTEMPTS))
             
             delay(RECONNECT_DELAY_MS * reconnectAttempts)
             
@@ -125,10 +126,10 @@ class SessionManagerService : Service() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                "Camera Session",
+                getString(R.string.notification_channel_name),
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
-                description = "Maintains active camera session"
+                description = getString(R.string.notification_channel_description)
             }
             
             val notificationManager = getSystemService(NotificationManager::class.java)
@@ -138,7 +139,7 @@ class SessionManagerService : Service() {
     
     private fun createNotification(contentText: String): Notification {
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("LogiCam")
+            .setContentTitle(getString(R.string.app_name))
             .setContentText(contentText)
             .setSmallIcon(android.R.drawable.ic_menu_camera)
             .setPriority(NotificationCompat.PRIORITY_LOW)

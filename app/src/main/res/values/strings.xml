@@ -14,4 +14,28 @@
     <string name="permissions_required_message">LogiCam needs camera and microphone access to record videos. Would you like to open settings?</string>
     <string name="open_settings">Open Settings</string>
     <string name="exit_app">Exit</string>
+    
+    <!-- MainActivity status strings -->
+    <string name="status_idle">Idle</string>
+    <string name="status_initializing">Initializing camera…</string>
+    <string name="status_camera_ready">Camera ready</string>
+    <string name="status_recording_format">Recording… %1$ds</string>
+    <string name="status_recording_saved">Recording saved</string>
+    <string name="status_error_format">Error: %1$s</string>
+    <string name="status_reconnecting">Reconnecting…</string>
+    <string name="status_session_error">Session error</string>
+    <string name="recording_saved_format">Recording saved: %1$s</string>
+    
+    <!-- Error dialog strings -->
+    <string name="error_camera_title">Camera Error</string>
+    <string name="retry">Retry</string>
+    <string name="exit">Exit</string>
+    
+    <!-- SessionManagerService notification strings -->
+    <string name="notification_session_active">Camera session active</string>
+    <string name="notification_session_ready">Camera session ready</string>
+    <string name="notification_session_failed">Camera session failed</string>
+    <string name="notification_reconnecting_format">Reconnecting camera… (%1$d/%2$d)</string>
+    <string name="notification_channel_name">Camera Session</string>
+    <string name="notification_channel_description">Maintains active camera session</string>
 </resources>

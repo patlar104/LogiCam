@@ -150,15 +150,15 @@ class MainActivity : AppCompatActivity() {
             viewModel.uiState.collectLatest { state ->
                 when (state) {
                     is MainViewModel.CameraUiState.Idle -> {
-                        updateStatus("Idle")
+                        updateStatus(getString(R.string.status_idle))
                         recordButton.isEnabled = false
                     }
                     is MainViewModel.CameraUiState.Initializing -> {
-                        updateStatus("Initializing camera...")
+                        updateStatus(getString(R.string.status_initializing))
                         recordButton.isEnabled = false
                     }
                     is MainViewModel.CameraUiState.Ready -> {
-                        updateStatus("Camera ready")
+                        updateStatus(getString(R.string.status_camera_ready))
                         recordButton.isEnabled = true
                         recordButton.text = getString(R.string.start_recording)
                         recordButton.setBackgroundColor(getColor(R.color.purple_500))
@@ -173,22 +173,22 @@ class MainActivity : AppCompatActivity() {
                     }
                     is MainViewModel.CameraUiState.Recording -> {
                         val durationSec = state.duration / 1000
-                        updateStatus("Recording... ${durationSec}s")
+                        updateStatus(getString(R.string.status_recording_format, durationSec))
                         recordButton.text = getString(R.string.stop_recording)
                         recordButton.setBackgroundColor(getColor(R.color.recording_red))
                     }
                     is MainViewModel.CameraUiState.RecordingCompleted -> {
-                        updateStatus("Recording saved")
+                        updateStatus(getString(R.string.status_recording_saved))
                         recordButton.text = getString(R.string.start_recording)
                         recordButton.setBackgroundColor(getColor(R.color.purple_500))
                         Toast.makeText(
                             this@MainActivity,
-                            "Recording saved: ${state.file.name}",
+                            getString(R.string.recording_saved_format, state.file.name),
                             Toast.LENGTH_SHORT
                         ).show()
                     }
                     is MainViewModel.CameraUiState.Error -> {
-                        updateStatus("Error: ${state.message}")
+                        updateStatus(getString(R.string.status_error_format, state.message))
                         recordButton.isEnabled = state.canRetry
                         if (state.canRetry) {
                             showErrorDialog(state.message)
@@ -216,12 +216,12 @@ class MainActivity : AppCompatActivity() {
     
     private fun showErrorDialog(message: String) {
         AlertDialog.Builder(this)
-            .setTitle("Camera Error")
+            .setTitle(R.string.error_camera_title)
             .setMessage(message)
-            .setPositiveButton("Retry") { _, _ ->
+            .setPositiveButton(R.string.retry) { _, _ ->
                 viewModel.retryInitialization(this)
             }
-            .setNegativeButton("Exit") { _, _ ->
+            .setNegativeButton(R.string.exit) { _, _ ->
                 finish()
             }
             .setCancelable(false)
@@ -236,10 +236,10 @@ class MainActivity : AppCompatActivity() {
                         SecureLogger.i("MainActivity", "Session active")
                     }
                     SessionManagerService.SessionState.RECONNECTING -> {
-                        updateStatus("Reconnecting...")
+                        updateStatus(getString(R.string.status_reconnecting))
                     }
                     SessionManagerService.SessionState.ERROR -> {
-                        updateStatus("Session error")
+                        updateStatus(getString(R.string.status_session_error))
                     }
                     else -> {}
                 }
