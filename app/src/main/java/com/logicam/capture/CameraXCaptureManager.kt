@@ -3,6 +3,7 @@ package com.logicam.capture
 import android.content.Context
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.ImageCapture
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.video.Quality
@@ -30,6 +31,7 @@ class CameraXCaptureManager(
     private var cameraProvider: ProcessCameraProvider? = null
     private var videoCapture: VideoCapture<Recorder>? = null
     private var preview: Preview? = null
+    private var imageCapture: ImageCapture? = null
     private var imageAnalysis: ImageAnalysis? = null
     private var recording: Recording? = null
     
@@ -59,6 +61,11 @@ class CameraXCaptureManager(
             
             // Set up preview
             preview = Preview.Builder().build()
+            
+            // Set up image capture
+            imageCapture = ImageCapture.Builder()
+                .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
+                .build()
             
             // Set up image analysis for future use
             imageAnalysis = ImageAnalysis.Builder()
@@ -91,6 +98,7 @@ class CameraXCaptureManager(
                 cameraSelector,
                 preview,
                 videoCapture,
+                imageCapture,
                 imageAnalysis
             )
             
@@ -106,6 +114,8 @@ class CameraXCaptureManager(
     fun getPreview(): Preview? = preview
     
     fun getVideoCapture(): VideoCapture<Recorder>? = videoCapture
+    
+    fun getImageCapture(): ImageCapture? = imageCapture
     
     suspend fun setActiveRecording(recording: Recording?) {
         this.recording = recording

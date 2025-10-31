@@ -6,9 +6,12 @@ import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
 import android.os.IBinder
+import android.provider.Settings
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.Preview
@@ -16,6 +19,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.button.MaterialButton
 import com.logicam.R
+import com.logicam.capture.Camera2FallbackManager
 import com.logicam.capture.CameraXCaptureManager
 import com.logicam.capture.RecordingManager
 import android.view.LayoutInflater
@@ -39,6 +43,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var cameraManager: CameraXCaptureManager
     private lateinit var recordingManager: RecordingManager
     private lateinit var uploadManager: UploadManager
+    
+    private var camera2FallbackManager: Camera2FallbackManager? = null
     
     private var sessionService: SessionManagerService? = null
     private var isServiceBound = false
@@ -66,8 +72,18 @@ class MainActivity : AppCompatActivity() {
         if (allGranted) {
             initializeCamera()
         } else {
-            Toast.makeText(this, R.string.permission_required, Toast.LENGTH_LONG).show()
-            finish()
+            AlertDialog.Builder(this)
+                .setTitle(R.string.permissions_required_title)
+                .setMessage(R.string.permissions_required_message)
+                .setPositiveButton(R.string.open_settings) { _, _ ->
+                    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                        data = Uri.fromParts("package", packageName, null)
+                        startActivity(this)
+                    }
+                }
+                .setNegativeButton(R.string.exit_app) { _, _ -> finish() }
+                .setCancelable(false)
+                .show()
         }
     }
     
@@ -138,14 +154,37 @@ class MainActivity : AppCompatActivity() {
                 }
                 updateStatus("Camera ready")
             } else {
-                updateStatus("Camera initialization failed")
-                Toast.makeText(
-                    this@MainActivity,
-                    "Failed to initialize camera",
-                    Toast.LENGTH_SHORT
-                ).show()
+                // Try Camera2 fallback before giving up
+                SecureLogger.w("MainActivity", "CameraX failed, attempting Camera2 fallback")
+                updateStatus("Initializing backup camera...")
+                
+                camera2FallbackManager = Camera2FallbackManager(this@MainActivity)
+                val fallbackResult = camera2FallbackManager?.openCamera()
+                
+                if (fallbackResult?.isSuccess == true) {
+                    updateStatus("Camera ready (compatibility mode)")
+                    Toast.makeText(this@MainActivity, "Using compatibility camera mode", Toast.LENGTH_SHORT).show()
+                    // TODO: Add preview binding for Camera2
+                } else {
+                    updateStatus("Camera initialization failed")
+                    showCameraErrorDialog()
+                }
             }
         }
+    }
+    
+    private fun showCameraErrorDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("Camera Error")
+            .setMessage("Failed to initialize camera. Please check camera permissions and try again.")
+            .setPositiveButton("Retry") { _, _ ->
+                initializeCamera()
+            }
+            .setNegativeButton("Exit") { _, _ ->
+                finish()
+            }
+            .setCancelable(false)
+            .show()
     }
     
     private fun setupUI() {
@@ -276,6 +315,7 @@ class MainActivity : AppCompatActivity() {
             unbindService(serviceConnection)
         }
         cameraManager.shutdown()
+        camera2FallbackManager?.close()
         SecureLogger.i("MainActivity", "Activity destroyed")
     }
 }

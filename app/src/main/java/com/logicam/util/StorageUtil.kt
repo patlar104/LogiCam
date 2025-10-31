@@ -24,6 +24,18 @@ object StorageUtil {
         return "VID_$timestamp.mp4"
     }
     
+    fun getImageOutputDirectory(context: Context): File {
+        val mediaDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)?.let {
+            File(it, "LogiCam").apply { mkdirs() }
+        }
+        return if (mediaDir != null && mediaDir.exists()) mediaDir else context.filesDir
+    }
+    
+    fun generateImageFileName(): String {
+        val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
+        return "IMG_$timestamp.jpg"
+    }
+    
     fun getMetadataFile(videoFile: File): File {
         return File(videoFile.parentFile, "${videoFile.nameWithoutExtension}_metadata.json")
     }
