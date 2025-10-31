@@ -150,6 +150,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             if (result.isSuccess) {
                 val file = result.getOrNull()
                 if (file != null) {
+                    // Save to MediaStore for gallery visibility (Android 10+)
+                    val mediaStoreUri = com.logicam.util.StorageUtil.saveVideoToMediaStore(
+                        getApplication(),
+                        file
+                    )
+                    
+                    if (mediaStoreUri != null) {
+                        SecureLogger.i("MainViewModel", "Video saved to MediaStore and visible in gallery")
+                    }
+                    
                     _uiState.value = CameraUiState.RecordingCompleted(file)
                     
                     // Schedule upload if auto-upload is enabled
@@ -184,8 +194,19 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val result = manager.captureImage()
             if (result.isSuccess) {
                 val file = result.getOrNull()
-                SecureLogger.i("MainViewModel", "Photo captured: ${file?.name}")
-                // Photo captured successfully - could emit a separate state if needed
+                if (file != null) {
+                    // Save to MediaStore for gallery visibility (Android 10+)
+                    val mediaStoreUri = com.logicam.util.StorageUtil.saveImageToMediaStore(
+                        getApplication(),
+                        file
+                    )
+                    
+                    if (mediaStoreUri != null) {
+                        SecureLogger.i("MainViewModel", "Photo saved to MediaStore and visible in gallery")
+                    }
+                    
+                    SecureLogger.i("MainViewModel", "Photo captured: ${file.name}")
+                }
             } else {
                 SecureLogger.e("MainViewModel", "Photo capture failed")
             }
