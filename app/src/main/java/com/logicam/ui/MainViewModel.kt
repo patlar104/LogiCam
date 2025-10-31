@@ -52,6 +52,7 @@ class MainViewModel(
     
     /**
      * Initialize the camera system
+     * Null-safe: Handles container returning null managers
      */
     fun initializeCamera(lifecycleOwner: LifecycleOwner) {
         viewModelScope.launch {
@@ -60,12 +61,26 @@ class MainViewModel(
             try {
                 // Try CameraX first using container
                 val manager = container.provideCameraManager(lifecycleOwner)
+                if (manager == null) {
+                    SecureLogger.e("MainViewModel", "Container returned null camera manager")
+                    _uiState.value = CameraUiState.Error(
+                        "Failed to create camera manager",
+                        canRetry = true
+                    )
+                    return@launch
+                }
+                
                 val result = manager.initialize()
                 
                 if (result.isSuccess) {
                     cameraManager = manager
                     recordingManager = container.provideRecordingManager(manager)
                     photoCaptureManager = container.providePhotoCaptureManager(manager)
+                    
+                    // Null safety check for managers
+                    if (recordingManager == null || photoCaptureManager == null) {
+                        SecureLogger.w("MainViewModel", "One or more managers are null after initialization")
+                    }
                     
                     _uiState.value = CameraUiState.Ready
                     SecureLogger.i("MainViewModel", "CameraX initialized successfully")
@@ -118,23 +133,35 @@ class MainViewModel(
     
     /**
      * Start video recording
+     * Null-safe: Checks manager existence before use
      */
     fun startRecording() {
         viewModelScope.launch {
             val manager = recordingManager
             if (manager == null) {
+                SecureLogger.e("MainViewModel", "Cannot start recording: manager is null")
                 _uiState.value = CameraUiState.Error("Recording manager not initialized", false)
                 return@launch
             }
             
-            val result = manager.startRecording()
-            if (result.isSuccess) {
-                recordingStartTime = System.currentTimeMillis()
-                _uiState.value = CameraUiState.Recording(0)
-                SecureLogger.i("MainViewModel", "Recording started")
-            } else {
+            try {
+                val result = manager.startRecording()
+                if (result.isSuccess) {
+                    recordingStartTime = System.currentTimeMillis()
+                    _uiState.value = CameraUiState.Recording(0)
+                    SecureLogger.i("MainViewModel", "Recording started")
+                } else {
+                    val error = result.exceptionOrNull()
+                    SecureLogger.e("MainViewModel", "Recording start failed", error)
+                    _uiState.value = CameraUiState.Error(
+                        error?.message ?: "Failed to start recording",
+                        canRetry = false
+                    )
+                }
+            } catch (e: Exception) {
+                SecureLogger.e("MainViewModel", "Exception during recording start", e)
                 _uiState.value = CameraUiState.Error(
-                    "Failed to start recording",
+                    e.message ?: "Failed to start recording",
                     canRetry = false
                 )
             }
@@ -188,33 +215,50 @@ class MainViewModel(
     
     /**
      * Capture a photo
+     * Null-safe: Checks photo manager before capture
      */
     fun capturePhoto() {
         viewModelScope.launch {
             val manager = photoCaptureManager
             if (manager == null) {
+                SecureLogger.e("MainViewModel", "Cannot capture photo: manager is null")
                 _uiState.value = CameraUiState.Error("Photo capture not available", false)
                 return@launch
             }
             
-            val result = manager.captureImage()
-            if (result.isSuccess) {
-                val file = result.getOrNull()
-                if (file != null) {
-                    // Save to MediaStore for gallery visibility (Android 10+)
-                    val mediaStoreUri = com.logicam.util.StorageUtil.saveImageToMediaStore(
-                        getApplication(),
-                        file
-                    )
-                    
-                    if (mediaStoreUri != null) {
-                        SecureLogger.i("MainViewModel", "Photo saved to MediaStore and visible in gallery")
+            try {
+                val result = manager.captureImage()
+                if (result.isSuccess) {
+                    val file = result.getOrNull()
+                    if (file != null) {
+                        // Save to MediaStore for gallery visibility (Android 10+)
+                        val mediaStoreUri = com.logicam.util.StorageUtil.saveImageToMediaStore(
+                            getApplication(),
+                            file
+                        )
+                        
+                        if (mediaStoreUri != null) {
+                            SecureLogger.i("MainViewModel", "Photo saved to MediaStore and visible in gallery")
+                        }
+                        
+                        SecureLogger.i("MainViewModel", "Photo captured: ${file.name}")
+                    } else {
+                        SecureLogger.w("MainViewModel", "Photo capture returned null file")
                     }
-                    
-                    SecureLogger.i("MainViewModel", "Photo captured: ${file.name}")
+                } else {
+                    val error = result.exceptionOrNull()
+                    SecureLogger.e("MainViewModel", "Photo capture failed", error)
+                    _uiState.value = CameraUiState.Error(
+                        error?.message ?: "Failed to capture photo",
+                        canRetry = false
+                    )
                 }
-            } else {
-                SecureLogger.e("MainViewModel", "Photo capture failed")
+            } catch (e: Exception) {
+                SecureLogger.e("MainViewModel", "Exception during photo capture", e)
+                _uiState.value = CameraUiState.Error(
+                    e.message ?: "Failed to capture photo",
+                    canRetry = false
+                )
             }
         }
     }

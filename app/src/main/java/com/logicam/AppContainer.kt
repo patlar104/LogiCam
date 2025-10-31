@@ -11,14 +11,15 @@ import kotlinx.coroutines.CoroutineScope
 /**
  * Manual dependency injection container
  * Provides centralized dependency creation for testing and production
+ * Open for testing purposes to allow mocking
  */
-class AppContainer(private val applicationContext: Context) {
+open class AppContainer(private val applicationContext: Context) {
     
     /**
      * Provide CameraXCaptureManager instance
      * @param lifecycle LifecycleOwner for camera binding
      */
-    fun provideCameraManager(lifecycle: LifecycleOwner): CameraXCaptureManager {
+    open fun provideCameraManager(lifecycle: LifecycleOwner): CameraXCaptureManager {
         return CameraXCaptureManager(applicationContext, lifecycle)
     }
     
@@ -26,7 +27,7 @@ class AppContainer(private val applicationContext: Context) {
      * Provide RecordingManager instance
      * @param cameraManager CameraXCaptureManager dependency
      */
-    fun provideRecordingManager(cameraManager: CameraXCaptureManager): RecordingManager {
+    open fun provideRecordingManager(cameraManager: CameraXCaptureManager): RecordingManager {
         return RecordingManager(applicationContext, cameraManager)
     }
     
@@ -34,7 +35,7 @@ class AppContainer(private val applicationContext: Context) {
      * Provide PhotoCaptureManager instance
      * @param cameraManager CameraXCaptureManager dependency
      */
-    fun providePhotoCaptureManager(cameraManager: CameraXCaptureManager): PhotoCaptureManager {
+    open fun providePhotoCaptureManager(cameraManager: CameraXCaptureManager): PhotoCaptureManager {
         return PhotoCaptureManager(applicationContext, cameraManager)
     }
     
@@ -42,7 +43,7 @@ class AppContainer(private val applicationContext: Context) {
      * Provide UploadManager instance
      * @param scope CoroutineScope for upload operations
      */
-    fun provideUploadManager(scope: CoroutineScope): UploadManager {
+    open fun provideUploadManager(scope: CoroutineScope): UploadManager {
         return UploadManager(applicationContext, scope)
     }
 }
